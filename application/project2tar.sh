@@ -20,8 +20,7 @@ SCRIPT_NAME=${0##*/}
 #
 KEY_PROJECT_DIR="project-dir"
 KEY_ARCHIVE_DIR="archive-dir"
-KEY_DIR_LIST="dir-list-filename"
-KEY_TAR_OPTS="tar-options"
+KEY_TAR_EXTRA_OPTS="tar-extra-options"
 
 mandatoryKeys="\
   $KEY_PROJECT_DIR \
@@ -31,8 +30,7 @@ mandatoryKeys="\
 allKeys="\
   ${mandatoryKeys[0]} \
   ${mandatoryKeys[1]} \
-  $KEY_DIR_LIST \
-  $KEY_TAR_OPTS \
+  $KEY_TAR_EXTRA_OPTS \
 "
 
 #
@@ -77,7 +75,6 @@ invokeTar () {
 
   local projectDir="$1"
   local archiveDir="$2"
-  local timeStamp=
 
   local archiveName=${projectDir##*/}
   archiveName="$archiveName"-"$(date +"%m-%d-%YT%H%M%S")"
@@ -112,15 +109,8 @@ createPropFile () {
 	$KEY_ARCHIVE_DIR=
 
 	# Optional
-	# Set here the name of the dirlist file
-	# The default name is 'dirlist.txt'
-	# NOTE : Only directories which contains a dirlist file will be archived!
-	$KEY_DIR_LIST=
-
-	# Optional
 	# Set here extra options for the 'tar'
-	# The default options are 'cfz'
-	$KEY_TAR_OPTS=
+	$KEY_TAR_EXTRA_OPTS=
 	EOF
   ) > "$propfileName"
 
@@ -140,7 +130,7 @@ abortExecution () {
   Execution aborted.
   Please fix the hints first.
 "
-
+  exit 1;
 }
 
 #
@@ -201,7 +191,7 @@ main () {
 
     createPropFile "$propFileName"
  
-    return 1
+    exit 1
 
   fi
 
