@@ -1,0 +1,4 @@
+'project2tar.properties' is the default prop file when invoking './project2tar.sh' whitout any argument.
+
+You can also invoke as './project2tar.sh separate-generator-fragment-xtext.properties' which will use the 'separate-generator-fragment-xtext.properties' file.
+  

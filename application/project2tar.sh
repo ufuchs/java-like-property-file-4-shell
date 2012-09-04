@@ -32,7 +32,7 @@ allKeys="\
   ${mandatoryKeys[1]} \
   $KEY_TAR_EXTRA_OPTS \
 "
-
+  
 #
 #
 #
@@ -75,15 +75,24 @@ invokeTar () {
 
   local projectDir="$1"
   local archiveDir="$2"
+  getPropertyValue $KEY_TAR_EXTRA_OPTS extraOpts
 
   local archiveName=${projectDir##*/}
   archiveName="$archiveName"-"$(date +"%m-%d-%YT%H%M%S")"
 
 #  archiveName=$(echo $archiveName | sed -e 's/[.]/_/g')
 
-  echo $archiveName
+  tarparams="czPf $archiveDir/$archiveName.tgz $extraOpts $projectDir/"
 
-  tar vcfz "$archiveDir/$archiveName.zip" "$projectDir"
+  echo
+  echo "  [invoking 'tar' with following params]"
+  echo "  $tarparams"
+
+  tar $tarparams
+
+  echo
+  echo "  [your tar-file has been written]"
+  echo "  $archiveDir/$archiveName"
 
 }
 
