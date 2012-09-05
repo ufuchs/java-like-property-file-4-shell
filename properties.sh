@@ -19,7 +19,7 @@ getPropertyValue ()
   for property in $properties; do
 
     local key=$(echo ${property%%=*})
-    local value=$(echo ${property##*=})
+    local value=$(echo ${property#*=})
 
     [ "$1" = "$key" ] && {
       eval $result="'$value'"
