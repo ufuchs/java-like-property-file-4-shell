@@ -16,14 +16,6 @@ It wraps the 'tar' command parametrised by the prop file.
 
 (Background : The whole thing was created to establish a backup strategy for a multiple project Eclipse/Osgi application to archive some of sub projects for a later reuse by other persons. Outside any git repository.)
 
-BE AWARE:
-
-Just now I detected an error in properties like this: 
-
-  "tar-extra-options=--exclude-tag=exclude.tar"
-
-It gets you a value of "exclude.tar" instead of "--exclude-tag=exclude.tar". Sorry.
-
 Best regards, Uli
 
  
