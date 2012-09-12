@@ -5,81 +5,117 @@
 
 KEY_NOT_FOUND=100
 
+declare -a PROPERTIES
+declare -a KEYSET
+
+#
+# Gets the key name of a key/value pair
+# @param $1	the key/value pair
+# qreturn	the key name of the key/value pair
+getKey () {
+  echo ${1%%=*}
+}
+
+#
+# Gets the value of a key/value pair
+# @param $1	the key/value pair
+# qreturn	the value of the key/value pair
+getValue () {
+  echo "${1#*=}"
+}
+
+#
+# checks if a list of keys contains a particular key
+# @param $1	list of keys
+# @param $2	key in question
+# @return	true if list contains the key in question
+#
+containsKey () {
+  
+  local keys="$1"
+  local keyInQuestion="$2"
+  local found=0
+
+  # key list lookup
+  for key in $keys; do
+
+    [ "$keyInQuestion" = "$key" ] && {
+      found=1
+      break
+    }
+      
+  done
+
+  return "$found"
+
+}
+
 #
 # Gets the value of a property by a given key
-#
 # @param $1	key name of the property
-# @param $2	value of the property by reference
-# @return	if successfull otherwise PROPKEY_NOT_FOUND
+# @return	value of the property
 getPropertyValue () 
-{
-
-  local result=$2   
-
-  for property in $properties; do
-
-    local key=$(echo ${property%%=*})
-    local value=$(echo ${property#*=})
-
-    [ "$1" = "$key" ] && {
-      eval $result="'$value'"
-      return 0
-    }
-
-  done 
-
-  return $PROPKEY_NOT_FOUND
-
-}
-
-#
-# Appends a new key/value pair to a given property string
-#
-# @param $1	the current property string
-# @param $2	new property to add
-# @param $3	separator sign between the concatenated properties
-# @return	the current property string plus the new property
-#
-appendTo () {
-
-  local properties="$1"
-  local value="$2"
-  local separator=${3:-' '}
-
-  [ ${#properties} -ne 0 ] && properties="$properties""$separator"
-
-  echo "$properties""$value"
-
-}
-
-#
-# Loads the content from PROPERTY_FILENAME into an array.
-# An element in the array represents a single line from the property file.
-# In the form 'KEY=VALUE
-#
-# @param $1	name of the property file
-# @return	an array of key/value pairs 
-loadProperties () 
 {
 
   local result=""
 
-  #  Remove all comments and
-  #+ leading and trailing white spaces and
-  #+ spaces within the property
-  #   
-  while read line; do
+  for property in "${PROPERTIES[@]}"; do
 
-    # 1.remove all whitespaces
-    # 2.remove all comments
-    line=$(echo $line | sed -e 's/[ \t]*//g' -e 's/#.*//')    
+    local key=$(getKey "$property")
+    local value=$(getValue "$property")
 
-    [ ${#line} -eq 0 ] && continue       # skip the now eventually empty lines
+    [ "$1" == "$key" ] && {
+      result="$value"
+      break
+    }
 
-     result=$(appendTo "$result" "$line")
-
-  done < "$1"                            # the input comes from here...
+  done 
 
   echo "$result"
 
 }
+
+#
+# Loads the content from PROPERTY_FILENAME into an array named 'PROPERTIES'.
+# An element in the array represents a single line from the property file.
+# In the form 'KEY=VALUE
+#
+# @param $1	name of the property file
+loadProperties () 
+{
+
+  local cnt=0
+
+  while read line; do
+
+    # 1.remove all leading whitespaces
+    # 2 remove all trailing whitespaces
+    # 3.remove all comments
+    line=$(echo $line | sed -e 's/^[ 	]*//g' -e 's/[ 	]*$//g' -e 's/#.*//')
+    #                               ^
+    #                               |  this is a space and a tab because the sed on 
+    #                               |+ Mac OS 10.7 doesn't recognize a '\t'
+
+    [ ${#line} -eq 0 ] && continue  # skip the now eventually empty lines
+
+    PROPERTIES[cnt]="$line"
+    ((cnt++))
+
+  done < "$1"                       # the input comes from here...
+
+  # populate the KEYSET
+  local i=0
+  for property in "${PROPERTIES[@]}"; do 
+
+    KEYSET[i]=$(getKey "$property")
+    ((i++))
+
+  done 
+
+#  for i in "${KEYSET[@]}"; do echo $i; done 
+
+}
+
+
+
+

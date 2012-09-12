@@ -11,6 +11,30 @@
 #
 
 #
+# Appends a new string to a given other string
+#
+# @param $1	the current string
+# @param $2	new string to add
+# @param $3	separator sign between the concatenated strings
+# @return	the current string plus the new string
+#
+appendTo () {
+
+  local curr="$1"
+  local new="$2"
+  local separator=${3:-' '}
+                       #  the default separator
+                       #+ is the space sign
+
+  [ ${#curr} -ne 0 ] && curr="$curr""$separator"
+                       #  add the separator sign if the
+                       #+ current string is no longer empty
+
+  echo "$curr""$new"
+
+}
+
+#
 #
 #
 checkForUnknownKeys () {
@@ -19,23 +43,13 @@ checkForUnknownKeys () {
   local unknownKeys=""
 
   # property list lookup
-  for property in $properties; do
+  for property in "${PROPERTIES[@]}"; do
 
-    local found=0
+    local keyInQuestion=$(getKey "$property")
 
-    local propKey=$(echo ${property%%=*})
+    containsKey "$keys" "$keyInQuestion"
 
-    # key list lookup
-    for key in $keys; do
-
-      [ "$propKey" = "$key" ] && {
-        found=1
-        break
-      }
-
-    done 
-
-    [ $found -eq 0 ] && unknownKeys=$(appendTo "$unknownKeys" "$propKey""=")      
+    [ $? -eq 0 ] && unknownKeys=$(appendTo "$unknownKeys" "$keyInQuestion""=")            
 
   done
 
@@ -52,11 +66,21 @@ checkForMissingMandatoryKeys ()
   local mandatoryKeys="$1"
   local missingKeys=""
 
-  for key in $mandatoryKeys; do
+  for mandatoryKey in $mandatoryKeys; do
 
-    getPropertyValue $key value
-    [ $? -ne 0 ] && missingKeys=$(appendTo "$missingKeys" "$key")
-    
+    local found=0
+
+    for key in "${KEYSET[@]}"; do
+
+      [ "$key" = "$mandatoryKey" ] && {
+        found=1
+        break
+      }
+
+    done
+
+    [ $found -eq 0 ] && missingKeys=$(appendTo "$missingKeys" "$mandatoryKey")
+
   done
 
   echo "$missingKeys"
@@ -69,31 +93,24 @@ checkForMissingMandatoryKeys ()
 checkForMissingValues ()
 {
 
-  local unknownKeys="$1"
+  local mandatoryKeys="$1"
   local missingValues=""
 
-  for property in $properties; do
+  for property in "${PROPERTIES[@]}"; do
 
-    local found=0
+    local key=$(getKey "$property")
 
-#    local propKey=$(echo ${property%%=*})
-#    local propValue=$(echo ${property##*=})
+    containsKey "$mandatoryKeys" "$key"
 
-    local propKey=${property%%=*}
-    local propValue=${property##*=}
+    if [ $? -eq 1 ]; then
 
-    for unknownKey in $unknownKeys; do
+      local value="$(getValue "$property")"  
 
-      [ "$propKey" = "$unknownKey" ] && {
-        found=1
-        break
-      }
-      
-    done
+      if [ -z "$value" ]; then
+        missingValues=$(appendTo "$missingValues" "$key""=")
+      fi
 
-    [ $found -eq 1 ] && {
-      [ -z "$propValue" ] && missingValues=$(appendTo "$missingValues" "$propKey""=")
-    }
+    fi
 
   done 
   
@@ -129,7 +146,6 @@ message () {
 ===============================================================================
 Report of integrity check:"
 
-
 }
 
 #
@@ -152,6 +168,7 @@ checkIntegrityOfProperties () {
 
   # check for unknown key items
   unknownKeys=$(checkForUnknownKeys "$allKeys")
+  [ ${#unknownKeys} -ne 0 ] && retVal=1
 
   # check for missing values in the mandatory keys
   missingValues=$(checkForMissingValues "$mandatoryKeys")
@@ -163,7 +180,7 @@ checkIntegrityOfProperties () {
 
     writeReportSection "Missing mandatory keys" "$missingKeys" "$ident"
     writeReportSection "Unknown/mispelled keys" "$unknownKeys" "$ident"
-    writeReportSection "Keys without value" "$missingValues" "$ident"
+    writeReportSection "Mandatory keys without value" "$missingValues" "$ident"
 
   }
 

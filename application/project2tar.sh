@@ -38,9 +38,9 @@ allKeys="\
 #
 archiveProject () {
 
-  getPropertyValue $KEY_ARCHIVE_DIR archiveDir
+  local archiveDir=$(getPropertyValue "$KEY_ARCHIVE_DIR")
 
-  getPropertyValue $KEY_PROJECT_DIR projectDir
+  local projectDir=$(getPropertyValue "$KEY_PROJECT_DIR")
 
   # a missing 'projcetDir' is a show stopper...
   if [ ! -d ""$projectDir"" ]; then
@@ -67,7 +67,6 @@ archiveProject () {
 
 }
 
-
 #
 #
 #
@@ -75,25 +74,29 @@ invokeTar () {
 
   local projectDir="$1"
   local archiveDir="$2"
-  getPropertyValue $KEY_TAR_EXTRA_OPTS extraOpts
+  local extraOpts=$(getPropertyValue "$KEY_TAR_EXTRA_OPTS")
 
   local archiveName=${projectDir##*/}
   archiveName="$archiveName"-"$(date +"%m-%d-%YT%H%M%S")"
 
 #  archiveName=$(echo $archiveName | sed -e 's/[.]/_/g')
 
-  tarparams="czPf $archiveDir/$archiveName.tgz $extraOpts $projectDir/"
+  tarparams="czf $archiveDir/$archiveName.tgz $extraOpts $projectDir/"
 
   echo
-  echo "  [invoking 'tar' with following params]"
-  echo "  $tarparams"
+  echo "[invoking 'tar' with following params]"
+  for params in $tarparams; do
+    echo "  $params"
+  done
+  echo
 
   tar $tarparams
 
-  echo
-  echo "  [your tar-file has been written]"
-  echo "  $archiveDir/$archiveName"
-
+  if [ $? -eq 0 ]; then
+    echo
+    echo "[your tar-file has been written]"
+    echo "  $archiveDir/$archiveName"
+  fi
 }
 
 #
@@ -204,7 +207,7 @@ main () {
 
   fi
 
-  properties=$(loadProperties "$propFileName")
+  loadProperties "$propFileName"
 
   checkIntegrityOfProperties "$allKeys" "$mandatoryKeys"
 
